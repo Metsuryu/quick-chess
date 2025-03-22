@@ -3,7 +3,7 @@
  */
 module.exports = {
   siteMetadata: {
-    siteUrl: `TODO`,
+    siteUrl: `https://www.placeholderTODO.com`,
   },
   plugins: [],
 }
