@@ -2,7 +2,6 @@
   display: flex;
   flex-direction: column;
   margin: 0 auto;
-  /* Chess board color scheme */
   background-color: #3a1b07;
   border: 1px solid #000;
   border-radius: 10px;
@@ -27,6 +26,10 @@
   position: relative;
 }
 
+.cellStyle img {
+  scale: 0.8;
+}
+
 .rowStyle:nth-child(odd) .cellStyle:nth-child(even) {
   background-color: #aa5922;
 }
@@ -35,11 +38,6 @@
   background-color: #aa5922;
 }
 
-/* .cellStyle:hover {
-  background-color: #ffd700 !important;
-} */
-
-/* Add highlight on top of cell */
 .highlight::before {
   content: '';
   position: absolute;
