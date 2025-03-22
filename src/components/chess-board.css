@@ -1,0 +1,113 @@
+.boardStyle {
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  background-color: #3a1b07;
+  border: 1px solid #000;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+  margin-bottom: 20px;
+  margin-top: 20px;
+  color: #000;
+  padding: 20px 0 0 20px;
+}
+
+.rowStyle {
+  display: flex;
+  flex-direction: row;
+}
+
+.cellStyle {
+  cursor: pointer;
+  width: 50px;
+  height: 50px;
+  background-color: #fff;
+  position: relative;
+}
+
+.cellStyle img {
+  pointer-events: none;
+  user-select: none;
+  scale: 0.8;
+}
+
+.rowStyle:nth-child(odd) .cellStyle:nth-child(even) {
+  background-color: #aa5922;
+}
+
+.rowStyle:nth-child(even) .cellStyle:nth-child(odd) {
+  background-color: #aa5922;
+}
+
+.highlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; 
+  background-color: #ffd700;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.selected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; 
+  background-color: #73ff27;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.boardComponent {
+  display: flex;
+  width: 80%;
+}
+
+.boardContainer {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  margin: auto;
+  margin-left: 25%;
+}
+
+.infoContainer {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 0;
+  background-color: grey;
+  width: 20em;
+  border-radius: 10px;
+  margin: 1em;
+}
+
+.coordinateLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #999;
+  font-weight: bold;
+}
+
+.rankLabel {
+  width: 20px;
+  height: 50px;
+}
+
+.fileLabels {
+  height: 20px;
+}
+
+.fileLabel {
+  width: 50px;
+  height: 20px;
+}
+
+
