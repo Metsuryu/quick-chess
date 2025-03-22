@@ -188,10 +188,6 @@ const Board = () => {
             ))}
           </div>
         </div>
-        
-        <button onClick={() => {
-          movePiece('e4');
-        }}>Move</button>
         <button onClick={() => {
           undoMove();
         }}>Undo</button>

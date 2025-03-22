@@ -27,6 +27,8 @@
 }
 
 .cellStyle img {
+  pointer-events: none;
+  user-select: none;
   scale: 0.8;
 }
 
