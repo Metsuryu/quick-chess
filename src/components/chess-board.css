@@ -1,3 +1,11 @@
+body {
+  background-color: #222;
+}
+
+h1 {
+  color: #eee;
+}
+
 .boardStyle {
   display: flex;
   flex-direction: column;
@@ -40,6 +48,7 @@
   background-color: #aa5922;
 }
 
+.promotion::before,
 .highlight::before {
   content: '';
   position: absolute;
@@ -85,6 +94,29 @@
   width: 20em;
   border-radius: 10px;
   margin: 1em;
+  justify-content: space-between;
+  padding: 0.5em;
+  text-align: center;
+}
+
+.moveHistory {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.moveHistoryList {
+  overflow: auto;
+  height: 5em;
+}
+
+.move {
+  background-color: #fff;
+  border-radius: 5px;
+  padding: 5px;
+  margin: 5px;
+  display: inline-block;
 }
 
 .coordinateLabel {
