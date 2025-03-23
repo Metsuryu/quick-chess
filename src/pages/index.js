@@ -1,13 +1,15 @@
 import * as React from "react"
-import Board from "../components/chess-board.js"
+import { Link } from "gatsby"
+import Board from "../components/chess-board"
 
-const Page = () => (
-  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"}}>
+const IndexPage = () => (
+  <main style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center"}}>
     <h1>Quick Chess</h1>
     <Board />
-  </div>
+    <Link to="/about" style={{ marginTop: "20px", color: "white" }}>About</Link>
+  </main>
 )
 
-export default Page
+export default IndexPage
 
 export const Head = () => <title>quick-chess</title>

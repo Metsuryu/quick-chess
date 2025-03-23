@@ -142,4 +142,15 @@ h1 {
   height: 20px;
 }
 
+@media (max-width: 1024px) {
+  .boardComponent {
+    flex-direction: column;
+  }
+  .boardContainer {
+    margin: auto;
+  }
+  .infoContainer {
+    margin: auto;
+  }
+}
 
