@@ -38,7 +38,7 @@ const Board = () => {
   const [legalMoves, setLegalMoves] = useState([]);
   const [moveHistory, setMoveHistory] = useState([]);
   const [turn, setTurn] = useState('w');
-
+  const [promotionMove, setPromotionMove] = useState(null);
 
   const checkGameOver = () => {
     const gameOver = chess.isGameOver();
@@ -67,9 +67,6 @@ const Board = () => {
   }
 
   const movePiece = (move) => {
-    console.log('move', move);
-    console.log('moveHistory', moveHistory);
-
     try {
       chess.move(move);
       setBoard(chess.board());
@@ -77,7 +74,6 @@ const Board = () => {
       setTurn(chess.turn());
       checkGameOver();
     } catch (err) {
-      console.log('err', err);
       setLegalMoves([]);
       removeHighlights();
       removeSelected();
@@ -114,23 +110,20 @@ const Board = () => {
   }
 
   const getSquareFromMove = (move) => {
-    // Handle castling
     if (move.includes('O-O-O')) {
-      return chess.turn() === 'w' ? 'c1' : 'c8'; // queenside castling
+      return chess.turn() === 'w' ? 'c1' : 'c8';
     }
     if (move.includes('O-O')) {
-      return chess.turn() === 'w' ? 'g1' : 'g8'; // kingside castling
+      return chess.turn() === 'w' ? 'g1' : 'g8';
     }
 
     // Remove check/checkmate indicators
     let cleanMove = move.replace(/[+#]/g, '');
-    
-    // Handle promotion
+  
     if (cleanMove.includes('=')) {
       cleanMove = cleanMove.substring(0, cleanMove.indexOf('='));
     }
     
-    // Extract the destination square - always the last two characters after removing check/checkmate/promotion
     const square = cleanMove.slice(-2);
     
     // Validate that it's a proper square (a1-h8)
@@ -158,18 +151,15 @@ const Board = () => {
 
     const moves = chess.moves({square});
     setLegalMoves(moves);
-    console.log('moves', moves);
     
     moves.forEach(move => {
       const isCastle = move.includes('O-O');
       const isPromotion = move.includes('=');
       if (isPromotion) {
         const promotionSquare = getSquareFromMove(move);
-        console.log('promotionSquare', promotionSquare);
         const cell = document.querySelector(`[data-square="${promotionSquare}"]`);
         cell?.classList.add('promotion');
       } else if (isCastle) {
-        console.log('isCastle', isCastle);
         const isLongCastle = move.includes('O-O-O');
         const turn = chess.turn();
         let kingSquare = turn === 'w' ? 'g1' : 'g8';    
@@ -180,7 +170,6 @@ const Board = () => {
         kingCell?.classList.add('highlight');
       } else {
         const justSquare = getSquareFromMove(move);
-        console.log('justSquare', justSquare);
         const cell = document.querySelector(`[data-square="${justSquare}"]`);
         cell?.classList.add('highlight');
       }
@@ -192,28 +181,25 @@ const Board = () => {
     const isPawn = piece && piece.type === 'p';
     const isLastRank = (piece.color === 'w' && move[1] === '8') || 
                         (piece.color === 'b' && move[1] === '1');
-    console.log('isPawn', isPawn);
-    console.log('isLastRank', isLastRank);
     return isPawn && isLastRank;
   }
 
   const handleCellClick = (square) => {
     if(!square) return;
+    
+    // If we have a promotion in progress, ignore new clicks
+    if (promotionMove) return;
+    
     setLegalMoves([]);
     removeHighlights();
     removeSelected();
-    console.log('square', square);
     
     if(selectedCell) {
       const targetSquare = chess.get(square);
-      console.log('targetSquare', targetSquare);
       
       if (!targetSquare) {
-        console.log('Moving piece', selectedCell?.dataset.square, 'to', square);
-        
         if (isMovePromotion(selectedCell, square)) {
-          console.log('isPawn and isLastRank');
-          movePiece({ from: selectedCell?.dataset.square, to: square, promotion: 'q' });
+          setPromotionMove({ from: selectedCell?.dataset.square, to: square });
         } else {
           setSelectedCell(null);
           movePiece({ from: selectedCell?.dataset.square, to: square });
@@ -223,8 +209,7 @@ const Board = () => {
           return;
         } else {
           if (isMovePromotion(selectedCell, square)) {
-            console.log('isPawn and isLastRank');
-            movePiece({ from: selectedCell?.dataset.square, to: square, promotion: 'q' });
+            setPromotionMove({ from: selectedCell?.dataset.square, to: square });
           } else {
             movePiece({ from: selectedCell?.dataset.square, to: square });
           }
@@ -233,6 +218,20 @@ const Board = () => {
     } else {
       highlightMoves(square);
     }
+  };
+
+  const handlePromotion = (pieceType) => {
+    if (!pieceType || !promotionMove) {
+      setPromotionMove(null);
+      return;
+    }
+
+    movePiece({
+      ...promotionMove,
+      promotion: pieceType
+    });
+
+    setPromotionMove(null);
   };
 
   const showPieceImage = (piece) => {
@@ -292,6 +291,23 @@ const Board = () => {
         <button onClick={() => {
           undoMove();
         }}>Undo</button>
+        
+        {promotionMove && (
+          <div className="promotionDialog">
+            <p>Choose promotion piece:</p>
+            <select 
+              onChange={(e) => handlePromotion(e.target.value)}
+              defaultValue=""
+            >
+              <option value="" disabled>Select a piece</option>
+              <option value="q">Queen</option>
+              <option value="r">Rook</option>
+              <option value="b">Bishop</option>
+              <option value="n">Knight</option>
+            </select>
+            <button onClick={() => handlePromotion(null)}>Cancel</button>
+          </div>
+        )}
       </div>
     </div>
   )
