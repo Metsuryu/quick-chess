@@ -18,9 +18,11 @@ const Board = () => {
     chess 
   } = useChessGame();
 
-  const [selectedCell, setSelectedCell] = useState(null);
   const [legalMoves, setLegalMoves] = useState([]);
   const [promotionMove, setPromotionMove] = useState(null);
+  const [highlightedSquares, setHighlightedSquares] = useState([]);
+  const [selectedSquare, setSelectedSquare] = useState(null);
+  const [promotionSquares, setPromotionSquares] = useState([]);
 
   const checkGameOver = () => {
     const gameOver = chess.isGameOver();
@@ -55,24 +57,9 @@ const Board = () => {
   };
 
   const removeHighlights = () => {
-    removeSelected();
-    const highlightedCells = document.querySelectorAll('.highlight');
-    const promotionCells = document.querySelectorAll('.promotion');
-    highlightedCells.forEach(cell => {
-      cell.classList.remove('highlight');
-    });
-
-    promotionCells.forEach(cell => {
-      cell.classList.remove('promotion');
-    });
-  }
-
-  const removeSelected = () => {
-    const selectedCells = document.querySelectorAll('.selected');
-    selectedCells.forEach(cell => {
-      cell.classList.remove('selected');
-    });
-    setSelectedCell(null);
+    setHighlightedSquares([]);
+    setSelectedSquare(null);
+    setPromotionSquares([]);
     setLegalMoves([]);
   }
 
@@ -99,34 +86,20 @@ const Board = () => {
   }
 
   const highlightMoves = (square) => {
-    removeHighlights();
+    // removeHighlights();
     if(!square) return;
 
-    const selectedCells = document.querySelectorAll('.selected');
-
-    const currentCell = document.querySelector(`[data-square="${square}"]`);
-    if(!currentCell?.classList.contains('selected')) {
-      selectedCells.forEach(cell => {
-        cell?.classList.remove('selected');
-      });
-      currentCell.classList.add('selected');
-      setSelectedCell(currentCell);
-    } else {
-      currentCell.classList.remove('selected');
-      setSelectedCell(null);
-      return;
-    }
+    setSelectedSquare(square);
 
     const moves = chess.moves({square});
     setLegalMoves(moves);
-    
+
     moves.forEach(move => {
-      const isCastle = move.includes('O-O');
       const isPromotion = move.includes('=');
+      const isCastle = move.includes('O-O');
       if (isPromotion) {
         const promotionSquare = getSquareFromMove(move);
-        const cell = document.querySelector(`[data-square="${promotionSquare}"]`);
-        cell?.classList.add('promotion');
+        setPromotionSquares([promotionSquare]);
       } else if (isCastle) {
         const isLongCastle = move.includes('O-O-O');
         const turn = chess.turn();
@@ -134,18 +107,17 @@ const Board = () => {
         if (isLongCastle) {
           kingSquare = turn === 'w' ? 'c1' : 'c8';
         }
-        const kingCell = document.querySelector(`[data-square="${kingSquare}"]`);
-        kingCell?.classList.add('highlight');
+        setHighlightedSquares(prevHighlights => [...prevHighlights, kingSquare]);
       } else {
         const justSquare = getSquareFromMove(move);
-        const cell = document.querySelector(`[data-square="${justSquare}"]`);
-        cell?.classList.add('highlight');
+        setHighlightedSquares(prevHighlights => [...prevHighlights, justSquare]);
       }
     });
   };
 
-  const isMovePromotion = (selectedCell, move) => {
-    const piece = chess.get(selectedCell?.dataset.square);
+  const isMovePromotion = (move) => {
+    const piece = chess.get(selectedSquare);
+    if(!piece) return false;
     const isPawn = piece && piece.type === 'p';
     const isLastRank = (piece.color === 'w' && move[1] === '8') || 
                         (piece.color === 'b' && move[1] === '1');
@@ -160,26 +132,25 @@ const Board = () => {
     
     setLegalMoves([]);
     removeHighlights();
-
     
-    if(selectedCell) {
+    if(selectedSquare) {
       const targetSquare = chess.get(square);
       
       if (!targetSquare) {
-        if (isMovePromotion(selectedCell, square)) {
-          setPromotionMove({ from: selectedCell?.dataset.square, to: square });
+        if (isMovePromotion(square)) {
+          setPromotionMove({ from: selectedSquare, to: square });
         } else {
-          setSelectedCell(null);
-          handleMovePiece({ from: selectedCell?.dataset.square, to: square });
+          setSelectedSquare(null);
+          handleMovePiece({ from: selectedSquare, to: square });
         }
       } else {
         if (targetSquare.color === chess.turn()) {
           return;
         } else {
-          if (isMovePromotion(selectedCell, square)) {
-            setPromotionMove({ from: selectedCell?.dataset.square, to: square });
+          if (isMovePromotion(square)) {
+            setPromotionMove({ from: selectedSquare, to: square });
           } else {
-            handleMovePiece({ from: selectedCell?.dataset.square, to: square });
+            handleMovePiece({ from: selectedSquare, to: square });
           }
         }
       }
@@ -223,7 +194,7 @@ const Board = () => {
       to: toSquare 
     });
     
-    setSelectedCell(null);
+    setSelectedSquare(null);
     removeHighlights();
   };
 
@@ -244,6 +215,9 @@ const Board = () => {
                       square={square}
                       onDrop={handleDrop}
                       onClick={handleCellClick}
+                      isSelected={selectedSquare === square}
+                      isHighlighted={highlightedSquares.includes(square)}
+                      isPromotion={promotionSquares.includes(square)}
                     >
                       {cell?.type && (
                         <DraggablePiece 
@@ -268,7 +242,7 @@ const Board = () => {
         </div>
         <div className="infoContainer">
           <p className="turn">Turn: {turn}</p>
-          <p className="selectedCell">Selected: {selectedCell?.dataset.square}</p>
+          <p className="selectedCell">Selected: {selectedSquare}</p>
           <div className="legalMoves">
             <p>Legal Moves:</p>
             {legalMoves.map((move, index) => (

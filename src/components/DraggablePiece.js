@@ -26,12 +26,7 @@ const DraggablePiece = ({ piece, square, addHighlights, removeHighlights }) => {
     <div
       ref={drag.bind(this)}
       style={{
-        opacity: isDragging ? 0.5 : 1,
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
+        opacity: isDragging ? 0.2 : 1
       }}
     >
       <ChessPiece piece={piece} />
