@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import { Chess } from 'chess.js'
 
 export function useChessGame() {
@@ -7,9 +7,16 @@ export function useChessGame() {
   const [turn, setTurn] = useState('w');
   const [moveHistory, setMoveHistory] = useState([]);
   
-  const movePiece = (move) => {
+  const moveSound = useMemo(() => new Audio('/move.ogg'), []);
+  
+  useEffect(() => {
+    moveSound.preload = 'auto';
+  }, [moveSound]);
+  
+  const movePiece = useCallback((move) => {
     try {
       chess.move(move);
+      moveSound.play();
       setBoard(chess.board());
       setMoveHistory(prevHistory => [...prevHistory, move]);
       setTurn(chess.turn());
@@ -17,7 +24,7 @@ export function useChessGame() {
     } catch (err) {
       return false;
     }
-  };
+  }, [chess, moveSound]);
   
   const undoMove = () => {
     chess.undo();

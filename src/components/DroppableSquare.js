@@ -23,6 +23,10 @@ const DroppableSquare = ({
     <div 
       ref={drop}
       data-square={square}
+      aria-label={square}
+      aria-roledescription="Square"
+      role="button"
+      tabIndex={0}
       className={
         `cellStyle
         ${isOver ? 'drop-hover' : ''}
@@ -30,6 +34,11 @@ const DroppableSquare = ({
         ${isSelected ? 'selected' : ''}
         ${isPromotion ? 'promotion' : ''}`}
       onClick={() => onClick(square)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          onClick(square);
+        }
+      }}
     >
       {children}
     </div>

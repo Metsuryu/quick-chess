@@ -8,6 +8,7 @@ const ChessPiece = ({ piece }) => {
         allFile {
           nodes {
             relativePath
+            publicURL
             childImageSharp {
               gatsbyImageData(
                 width: 50
@@ -20,7 +21,7 @@ const ChessPiece = ({ piece }) => {
         }
       }
     `);
-
+    
     const key = `${piece.color}${piece.type}`;
     const image = data?.allFile?.nodes.find(node => node.relativePath === `${key}.png`);
 
