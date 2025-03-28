@@ -7,16 +7,20 @@ export function useChessGame() {
   const [turn, setTurn] = useState('w');
   const [moveHistory, setMoveHistory] = useState([]);
   
-  const moveSound = useMemo(() => new Audio('/move.ogg'), []);
+  const moveSound = useMemo(() => 
+    typeof window !== 'undefined' ? new Audio('/move.ogg') : null
+  , []);
   
   useEffect(() => {
-    moveSound.preload = 'auto';
+    if (moveSound) {
+      moveSound.preload = 'auto';
+    }
   }, [moveSound]);
   
   const movePiece = useCallback((move) => {
     try {
       chess.move(move);
-      moveSound.play();
+      moveSound?.play();
       setBoard(chess.board());
       setMoveHistory(prevHistory => [...prevHistory, move]);
       setTurn(chess.turn());
