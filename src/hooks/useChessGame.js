@@ -11,7 +11,7 @@ export function useChessGame() {
     try {
       chess.move(move);
       setBoard(chess.board());
-      setMoveHistory([...moveHistory, move]);
+      setMoveHistory(prevHistory => [...prevHistory, move]);
       setTurn(chess.turn());
       return true;
     } catch (err) {

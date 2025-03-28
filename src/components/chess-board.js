@@ -1,18 +1,25 @@
-import * as React from "react"
-import "./chess-board.css"
-import { useState } from "react"
-import { Chess, SQUARES } from 'chess.js'
-import ChessPiece from './ChessPiece'
-
-const chess = new Chess();
-const startingBoard = chess.board();
+import * as React from "react";
+import "./chess-board.css";
+import { useState } from "react";
+import { SQUARES } from 'chess.js';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useChessGame } from '../hooks/useChessGame';
+import DraggablePiece from './DraggablePiece';
+import DroppableSquare from './DroppableSquare';
 
 const Board = () => {
-  const [board, setBoard] = useState(startingBoard);
+  const { 
+    board, 
+    turn, 
+    moveHistory, 
+    movePiece, 
+    undoMove,
+    chess 
+  } = useChessGame();
+
   const [selectedCell, setSelectedCell] = useState(null);
   const [legalMoves, setLegalMoves] = useState([]);
-  const [moveHistory, setMoveHistory] = useState([]);
-  const [turn, setTurn] = useState('w');
   const [promotionMove, setPromotionMove] = useState(null);
 
   const checkGameOver = () => {
@@ -41,28 +48,14 @@ const Board = () => {
     }
   }
 
-  const movePiece = (move) => {
-    try {
-      chess.move(move);
-      setBoard(chess.board());
-      setMoveHistory([...moveHistory, move]);
-      setTurn(chess.turn());
+  const handleMovePiece = (move) => {
+    if (movePiece(move)) {
       checkGameOver();
-    } catch (err) {
-      setLegalMoves([]);
-      removeHighlights();
-      removeSelected();
     }
   };
 
-  const undoMove = () => {
-    chess.undo();
-    setBoard(chess.board());
-    setMoveHistory(moveHistory.slice(0, -1));
-    setTurn(chess.turn());
-  };
-
   const removeHighlights = () => {
+    removeSelected();
     const highlightedCells = document.querySelectorAll('.highlight');
     const promotionCells = document.querySelectorAll('.promotion');
     highlightedCells.forEach(cell => {
@@ -75,7 +68,6 @@ const Board = () => {
   }
 
   const removeSelected = () => {
-    removeHighlights();
     const selectedCells = document.querySelectorAll('.selected');
     selectedCells.forEach(cell => {
       cell.classList.remove('selected');
@@ -108,11 +100,12 @@ const Board = () => {
 
   const highlightMoves = (square) => {
     removeHighlights();
+    if(!square) return;
 
     const selectedCells = document.querySelectorAll('.selected');
 
     const currentCell = document.querySelector(`[data-square="${square}"]`);
-    if(!currentCell.classList.contains('selected')) {
+    if(!currentCell?.classList.contains('selected')) {
       selectedCells.forEach(cell => {
         cell?.classList.remove('selected');
       });
@@ -167,7 +160,7 @@ const Board = () => {
     
     setLegalMoves([]);
     removeHighlights();
-    removeSelected();
+
     
     if(selectedCell) {
       const targetSquare = chess.get(square);
@@ -177,7 +170,7 @@ const Board = () => {
           setPromotionMove({ from: selectedCell?.dataset.square, to: square });
         } else {
           setSelectedCell(null);
-          movePiece({ from: selectedCell?.dataset.square, to: square });
+          handleMovePiece({ from: selectedCell?.dataset.square, to: square });
         }
       } else {
         if (targetSquare.color === chess.turn()) {
@@ -186,7 +179,7 @@ const Board = () => {
           if (isMovePromotion(selectedCell, square)) {
             setPromotionMove({ from: selectedCell?.dataset.square, to: square });
           } else {
-            movePiece({ from: selectedCell?.dataset.square, to: square });
+            handleMovePiece({ from: selectedCell?.dataset.square, to: square });
           }
         }
       }
@@ -201,7 +194,7 @@ const Board = () => {
       return;
     }
 
-    movePiece({
+    handleMovePiece({
       ...promotionMove,
       promotion: pieceType
     });
@@ -209,81 +202,110 @@ const Board = () => {
     setPromotionMove(null);
   };
 
-  const showPieceImage = (piece) => {
-    return <ChessPiece piece={piece} />
-  }
+  const handleDrop = (fromSquare, toSquare) => {
+    if (fromSquare === toSquare) return;
+    
+    const piece = chess.get(fromSquare);
+    if (!piece) return;
+    
+    // Check for promotion
+    if (piece.type === 'p') {
+      const isLastRank = (piece.color === 'w' && toSquare[1] === '8') || 
+                         (piece.color === 'b' && toSquare[1] === '1');
+      if (isLastRank) {
+        setPromotionMove({ from: fromSquare, to: toSquare });
+        return;
+      }
+    }
+    
+    handleMovePiece({ 
+      from: fromSquare, 
+      to: toSquare 
+    });
+    
+    setSelectedCell(null);
+    removeHighlights();
+  };
 
   return (
-    <div className="boardComponent">
-      <div className="boardContainer">
-        <div className="boardStyle">
-          {
-          board.map((row, rowIndex) => (
-            <div key={rowIndex} className="rowStyle">
-              {row.map((cell, cellIndex) => {
-                const index = rowIndex * 8 + cellIndex;
-                return (
-                  <div 
-                    key={cellIndex} 
-                    data-square={SQUARES[index]} 
-                    className="cellStyle" 
-                    onClick={() => {
-                      handleCellClick(SQUARES[index]);
-                    }}
-                  >
-                    {cell?.type && showPieceImage({type: cell.type, color: cell.color})}
-                  </div>
-                );
-              })}
-              <div className="coordinateLabel rankLabel">{8 - rowIndex}</div>
+    <DndProvider backend={HTML5Backend}>
+      <div className="boardComponent">
+        <div className="boardContainer">
+          <div className="boardStyle">
+            {
+            board.map((row, rowIndex) => (
+              <div key={rowIndex} className="rowStyle">
+                {row.map((cell, cellIndex) => {
+                  const index = rowIndex * 8 + cellIndex;
+                  const square = SQUARES[index];
+                  return (
+                    <DroppableSquare 
+                      key={cellIndex}
+                      square={square}
+                      onDrop={handleDrop}
+                      onClick={handleCellClick}
+                    >
+                      {cell?.type && (
+                        <DraggablePiece 
+                          piece={{type: cell.type, color: cell.color}} 
+                          square={square}
+                          addHighlights={highlightMoves.bind(this, square)}
+                          removeHighlights={removeHighlights.bind(this, square)}
+                        />
+                      )}
+                    </DroppableSquare>
+                  );
+                })}
+                <div className="coordinateLabel rankLabel">{8 - rowIndex}</div>
+              </div>
+            ))}
+            <div className="rowStyle fileLabels">
+              {['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((file, index) => (
+                <div key={index} className="coordinateLabel fileLabel">{file}</div>
+              ))}
             </div>
-          ))}
-          <div className="rowStyle fileLabels">
-            {['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((file, index) => (
-              <div key={index} className="coordinateLabel fileLabel">{file}</div>
+          </div>
+        </div>
+        <div className="infoContainer">
+          <p className="turn">Turn: {turn}</p>
+          <p className="selectedCell">Selected: {selectedCell?.dataset.square}</p>
+          <div className="legalMoves">
+            <p>Legal Moves:</p>
+            {legalMoves.map((move, index) => (
+              <span key={index}>{move} </span>
             ))}
           </div>
+          <div className="moveHistory">
+            <p>Move History:</p>
+            <div className="moveHistoryList">
+              {moveHistory.map((move, index) => (
+                <span className="move" key={index}>{move.from} {move.to} </span>
+              ))}
+            </div>
+          </div>
+          <button onClick={() => {
+            undoMove();
+          }}>Undo</button>
+          
+          {promotionMove && (
+            <div className="promotionDialog">
+              <p>Choose promotion piece:</p>
+              <select 
+                onChange={(e) => handlePromotion(e.target.value)}
+                defaultValue=""
+              >
+                <option value="" disabled>Select a piece</option>
+                <option value="q">Queen</option>
+                <option value="r">Rook</option>
+                <option value="b">Bishop</option>
+                <option value="n">Knight</option>
+              </select>
+              <button onClick={() => handlePromotion(null)}>Cancel</button>
+            </div>
+          )}
         </div>
       </div>
-      <div className="infoContainer">
-        <p className="turn">Turn: {turn}</p>
-        <p className="selectedCell">Selected: {selectedCell?.dataset.square}</p>
-        <div className="legalMoves">
-          <p>Legal Moves:</p>
-          {legalMoves.map((move, index) => (
-            <span key={index}>{move} </span>
-          ))}
-        </div>
-        <div className="moveHistory">
-          <p>Move History:</p>
-          <div className="moveHistoryList">
-            {moveHistory.map((move, index) => (
-              <span className="move" key={index}>{move.from} {move.to} </span>
-            ))}
-          </div>
-        </div>
-        <button onClick={() => {
-          undoMove();
-        }}>Undo</button>
-        
-        {promotionMove && (
-          <div className="promotionDialog">
-            <p>Choose promotion piece:</p>
-            <select 
-              onChange={(e) => handlePromotion(e.target.value)}
-              defaultValue=""
-            >
-              <option value="" disabled>Select a piece</option>
-              <option value="q">Queen</option>
-              <option value="r">Rook</option>
-              <option value="b">Bishop</option>
-              <option value="n">Knight</option>
-            </select>
-            <button onClick={() => handlePromotion(null)}>Cancel</button>
-          </div>
-        )}
-      </div>
-    </div>
+    </DndProvider>
   )
 }
 
